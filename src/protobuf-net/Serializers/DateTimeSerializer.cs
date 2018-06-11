@@ -17,10 +17,10 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(DateTime);
 #endif
-        public Type ExpectedType => expectedType;
+        public Type ExpectedType { get { return expectedType; } }
 
-        bool IProtoSerializer.RequiresOldValue => false;
-        bool IProtoSerializer.ReturnsValue => true;
+        bool IProtoSerializer.RequiresOldValue { get { return false; } }
+        bool IProtoSerializer.ReturnsValue { get { return true; } }
 
         private readonly bool includeKind, wellKnown;
         public DateTimeSerializer(DataFormat dataFormat, ProtoBuf.Meta.TypeModel model)
@@ -58,14 +58,14 @@ namespace ProtoBuf.Serializers
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.EmitWrite(ctx.MapType(typeof(BclHelpers)),
-                wellKnown ? nameof(BclHelpers.WriteTimestamp)
-                : includeKind ? nameof(BclHelpers.WriteDateTimeWithKind) : nameof(BclHelpers.WriteDateTime), valueFrom);
+                wellKnown ? "WriteTimestamp"
+                : includeKind ? "WriteDateTimeWithKind" : "WriteDateTime", valueFrom);
         }
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             if (wellKnown) ctx.LoadValue(valueFrom);
             ctx.EmitBasicRead(ctx.MapType(typeof(BclHelpers)),
-                wellKnown ? nameof(BclHelpers.ReadTimestamp) : nameof(BclHelpers.ReadDateTime),
+                wellKnown ? "ReadTimestamp" : "ReadDateTime",
                 ExpectedType);
         }
 #endif

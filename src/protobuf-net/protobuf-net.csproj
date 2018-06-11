@@ -8,6 +8,7 @@
     <DefineConstants>EMIT_ASSEMBLY_INFO</DefineConstants>
     <!-- new build tools spit these out -->
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <LangVersion>4.0</LangVersion>
 
     <!-- this is how we will configure the builds relatively cleanly -->
     <ImportLibs>net</ImportLibs>

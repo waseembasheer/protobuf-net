@@ -54,7 +54,7 @@ namespace ProtoBuf.Serializers
         public override Type ExpectedType { get { return arrayType; } }
         public override bool RequiresOldValue { get { return AppendToCollection; } }
         public override bool ReturnsValue { get { return true; } }
-	    private bool CanUsePackedPrefix() => CanUsePackedPrefix(packedWireType, itemType);
+        private bool CanUsePackedPrefix() { return CanUsePackedPrefix(packedWireType, itemType); }
 
 		internal static bool CanUsePackedPrefix(WireType packedWireType, Type itemType)
 	    {

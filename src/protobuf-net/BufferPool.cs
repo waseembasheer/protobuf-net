@@ -137,10 +137,10 @@ namespace ProtoBuf
         {
             private readonly WeakReference _reference;
 
-            public int Size { get; }
+            public int Size { get; private set; }
 
-            public bool IsAlive => _reference.IsAlive;
-            public byte[] Buffer => (byte[])_reference.Target;
+            public bool IsAlive { get { return _reference.IsAlive; } }
+            public byte[] Buffer { get { return (byte[])_reference.Target; } }
 
             public CachedBuffer(byte[] buffer)
             {

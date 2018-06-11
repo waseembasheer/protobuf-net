@@ -130,12 +130,12 @@ namespace ProtoBuf.Meta
         {
             if (baseType == null) throw new ArgumentNullException("baseType");
             if (this.baseType == baseType) return;
-            if (this.baseType != null) throw new InvalidOperationException($"Type '{this.baseType.Type.FullName}' can only participate in one inheritance hierarchy");
+            if (this.baseType != null) throw new InvalidOperationException("Type '" + this.baseType.Type.FullName + "' can only participate in one inheritance hierarchy");
 
             MetaType type = baseType;
             while (type != null)
             {
-                if (ReferenceEquals(type, this)) throw new InvalidOperationException($"Cyclic inheritance of '{this.baseType.Type.FullName}' is not allowed");
+                if (ReferenceEquals(type, this)) throw new InvalidOperationException("Cyclic inheritance of '" + this.baseType.Type.FullName + "' is not allowed");
                 type = type.baseType;
             }
             this.baseType = baseType;
@@ -425,7 +425,8 @@ namespace ProtoBuf.Meta
             }
             if (IsAutoTuple)
             {
-                ConstructorInfo ctor = ResolveTupleConstructor(type, out MemberInfo[] mapping);
+                MemberInfo[] mapping;
+                ConstructorInfo ctor = ResolveTupleConstructor(type, out mapping);
                 if (ctor == null) throw new InvalidOperationException();
                 return new TupleSerializer(model, ctor, mapping);
             }
@@ -507,7 +508,8 @@ namespace ProtoBuf.Meta
             {
                 if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute")
                 {
-                    if (typeAttribs[i].TryGet("AsReferenceDefault", out object tmp)) return (bool)tmp;
+                    object tmp;
+                    if (typeAttribs[i].TryGet("AsReferenceDefault", out tmp)) return (bool)tmp;
                 }
             }
             return false;
@@ -573,7 +575,7 @@ namespace ProtoBuf.Meta
 
                 if (fullAttributeTypeName == "ProtoBuf.ProtoPartialIgnoreAttribute")
                 {
-                    if (item.TryGet(nameof(ProtoPartialIgnoreAttribute.MemberName), out tmp) && tmp != null)
+                    if (item.TryGet("MemberName", out tmp) && tmp != null)
                     {
                         if (partialIgnores == null) partialIgnores = new BasicList();
                         partialIgnores.Add((string)tmp);
@@ -587,16 +589,16 @@ namespace ProtoBuf.Meta
                 
                 if (fullAttributeTypeName == "ProtoBuf.ProtoContractAttribute")
                 {
-                    if (item.TryGet(nameof(ProtoContractAttribute.Name), out tmp)) name = (string) tmp;
+                    if (item.TryGet("Name", out tmp)) name = (string) tmp;
                     if (Helpers.IsEnum(type)) // note this is subtly different to isEnum; want to do this even if [Flags]
                     {
 
 #if !FEAT_IKVM
                         // IKVM can't access EnumPassthruHasValue, but conveniently, EnumPassthru will only be returned if set via ctor or property
-                        if (item.TryGet(nameof(ProtoContractAttribute.EnumPassthruHasValue), false, out tmp) && (bool)tmp)
+                        if (item.TryGet("EnumPassthruHasValue", false, out tmp) && (bool)tmp)
 #endif
                         {
-                            if (item.TryGet(nameof(ProtoContractAttribute.EnumPassthru), out tmp))
+                            if (item.TryGet("EnumPassthru", out tmp))
                             {
                                 EnumPassthru = (bool)tmp;
                                 enumShouldUseImplicitPassThru = false;
@@ -606,28 +608,28 @@ namespace ProtoBuf.Meta
                     }
                     else
                     {
-                        if (item.TryGet(nameof(ProtoContractAttribute.DataMemberOffset), out tmp)) dataMemberOffset = (int) tmp;
+                        if (item.TryGet("DataMemberOffset", out tmp)) dataMemberOffset = (int) tmp;
 
 #if !FEAT_IKVM
                         // IKVM can't access InferTagFromNameHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property
-                        if (item.TryGet(nameof(ProtoContractAttribute.InferTagFromNameHasValue), false, out tmp) && (bool) tmp)
+                        if (item.TryGet("InferTagFromNameHasValue", false, out tmp) && (bool) tmp)
 #endif
                         {
-                            if (item.TryGet(nameof(ProtoContractAttribute.InferTagFromName), out tmp)) inferTagByName = (bool) tmp;
+                            if (item.TryGet("InferTagFromName", out tmp)) inferTagByName = (bool) tmp;
                         }
 
-                        if (item.TryGet(nameof(ProtoContractAttribute.ImplicitFields), out tmp) && tmp != null)
+                        if (item.TryGet("ImplicitFields", out tmp) && tmp != null)
                         {
                             implicitMode = (ImplicitFields) (int) tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
                         }
 
-                        if (item.TryGet(nameof(ProtoContractAttribute.SkipConstructor), out tmp)) UseConstructor = !(bool) tmp;
-                        if (item.TryGet(nameof(ProtoContractAttribute.IgnoreListHandling), out tmp)) IgnoreListHandling = (bool) tmp;
-                        if (item.TryGet(nameof(ProtoContractAttribute.AsReferenceDefault), out tmp)) AsReferenceDefault = (bool) tmp;
-                        if (item.TryGet(nameof(ProtoContractAttribute.ImplicitFirstTag), out tmp) && (int) tmp > 0) implicitFirstTag = (int) tmp;
-                        if (item.TryGet(nameof(ProtoContractAttribute.IsGroup), out tmp)) IsGroup = (bool)tmp;
+                        if (item.TryGet("SkipConstructor", out tmp)) UseConstructor = !(bool) tmp;
+                        if (item.TryGet("IgnoreListHandling", out tmp)) IgnoreListHandling = (bool) tmp;
+                        if (item.TryGet("AsReferenceDefault", out tmp)) AsReferenceDefault = (bool) tmp;
+                        if (item.TryGet("ImplicitFirstTag", out tmp) && (int) tmp > 0) implicitFirstTag = (int) tmp;
+                        if (item.TryGet("IsGroup", out tmp)) IsGroup = (bool)tmp;
 
-                        if (item.TryGet(nameof(ProtoContractAttribute.Surrogate), out tmp))
+                        if (item.TryGet("Surrogate", out tmp))
                         {
                             SetSurrogate((Type)tmp);
                         }
@@ -693,7 +695,7 @@ namespace ProtoBuf.Meta
                     if (!property.CanWrite)
                     {
                         // roslyn automatically implemented properties, in particular for get-only properties: <{Name}>k__BackingField;
-                        var backingFieldName = $"<{property.Name}>k__BackingField";
+                        var backingFieldName = "<" + property.Name + ">k__BackingField";
                         foreach (var fieldMemeber in foundList)
                         {
                             if ((fieldMemeber as FieldInfo != null) && fieldMemeber.Name == backingFieldName)
@@ -837,7 +839,8 @@ namespace ProtoBuf.Meta
             }
             if(family == AttributeFamily.None)
             { // check for obvious tuples
-                if (ResolveTupleConstructor(type, out MemberInfo[] mapping) != null)
+                MemberInfo[] mapping;
+                if (ResolveTupleConstructor(type, out mapping) != null)
                 {
                     family |= AttributeFamily.AutoTuple;
                 }
@@ -867,16 +870,18 @@ namespace ProtoBuf.Meta
             bool demandReadOnly = type.Name.IndexOf("Tuple", StringComparison.OrdinalIgnoreCase) < 0;
             for (int i = 0; i < fieldsPropsUnfiltered.Length; i++)
             {
-                if (fieldsPropsUnfiltered[i] is PropertyInfo prop)
+                if (fieldsPropsUnfiltered[i] is PropertyInfo)
                 {
+                    var prop = (PropertyInfo)fieldsPropsUnfiltered[i];
                     if (!prop.CanRead) return null; // no use if can't read
                     if (demandReadOnly && prop.CanWrite && Helpers.GetSetMethod(prop, false, false) != null) return null; // don't allow a public set (need to allow non-public to handle Mono's KeyValuePair<,>)
                     memberList.Add(prop);
                 }
                 else
                 {
-                    if (fieldsPropsUnfiltered[i] is FieldInfo field)
+                    if (fieldsPropsUnfiltered[i] is FieldInfo)
                     {
+                        var field = (FieldInfo)fieldsPropsUnfiltered[i];
                         if (demandReadOnly && !field.IsInitOnly) return null; // all public fields must be readonly to be counted a tuple
                         memberList.Add(field);
                     }
@@ -986,16 +991,17 @@ namespace ProtoBuf.Meta
 #endif
                     if (attrib != null)
                     {
-                        GetFieldName(ref name, attrib, nameof(ProtoEnumAttribute.Name));
+                        GetFieldName(ref name, attrib, "Name");
 #if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
                         if ((bool)Helpers.GetInstanceMethod(attrib.AttributeType
 #if WINRT || COREFX || PROFILE259
 							 .GetTypeInfo()
 #endif
-                            , nameof(ProtoEnumAttribute.HasValue)).Invoke(attrib.Target, null))
+                            , "HasValue").Invoke(attrib.Target, null))
 #endif
                         {
-                            if (attrib.TryGet(nameof(ProtoEnumAttribute.Value), out object tmp))
+                            object tmp;
+                            if (attrib.TryGet("Value", out tmp))
                             {
                                 if (fieldNumber != (int)tmp)
                                 {
@@ -1040,7 +1046,8 @@ namespace ProtoBuf.Meta
                 {
                     foreach (AttributeMap ppma in partialMembers)
                     {
-                        if (ppma.TryGet("MemberName", out object tmp) && (string)tmp == member.Name)
+                        object tmp;
+                        if (ppma.TryGet("MemberName", out tmp) && (string)tmp == member.Name)
                         {
                             GetFieldNumber(ref fieldNumber, ppma, "Tag");
                             GetFieldName(ref name, ppma, "Name");
@@ -1162,7 +1169,8 @@ namespace ProtoBuf.Meta
             }
             if ((attrib = GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
             {
-                if (attrib.TryGet("Value", out object tmp)) defaultValue = tmp;
+                object tmp;
+                if (attrib.TryGet("Value", out tmp)) defaultValue = tmp;
             }
             ValueMember vm = ((isEnum || normalizedAttribute.Tag > 0))
                 ? new ValueMember(model, type, normalizedAttribute.Tag, member, effectiveType, itemType, defaultType, normalizedAttribute.DataFormat, defaultValue)
@@ -1200,19 +1208,21 @@ namespace ProtoBuf.Meta
                 }
                 vm.DynamicType = normalizedAttribute.DynamicType;
 
-                vm.IsMap = ignoreListHandling ? false : vm.ResolveMapTypes(out var _, out var _, out var _);
+                Type tmp0, tmp1, tmp2;
+                vm.IsMap = ignoreListHandling ? false : vm.ResolveMapTypes(out tmp0, out tmp1, out tmp2);
                 if (vm.IsMap) // is it even *allowed* to be a map?
                 {
                     if ((attrib = GetAttribute(attribs, "ProtoBuf.ProtoMapAttribute")) != null)
                     {
-                        if (attrib.TryGet(nameof(ProtoMapAttribute.DisableMap), out object tmp) && (bool)tmp)
+                        object tmp;
+                        if (attrib.TryGet("DisableMap", out tmp) && (bool)tmp)
                         {
                             vm.IsMap = false;
                         }
                         else
                         {
-                            if (attrib.TryGet(nameof(ProtoMapAttribute.KeyFormat), out tmp)) vm.MapKeyFormat = (DataFormat)tmp;
-                            if (attrib.TryGet(nameof(ProtoMapAttribute.ValueFormat), out tmp)) vm.MapValueFormat = (DataFormat)tmp;
+                            if (attrib.TryGet("KeyFormat", out tmp)) vm.MapKeyFormat = (DataFormat)tmp;
+                            if (attrib.TryGet("ValueFormat", out tmp)) vm.MapValueFormat = (DataFormat)tmp;
                         }
                     }
                 }
@@ -1224,7 +1234,8 @@ namespace ProtoBuf.Meta
         private static void GetDataFormat(ref DataFormat value, AttributeMap attrib, string memberName)
         {
             if ((attrib == null) || (value != DataFormat.Default)) return;
-            if (attrib.TryGet(memberName, out object obj) && obj != null) value = (DataFormat)obj;
+            object obj;
+            if (attrib.TryGet(memberName, out obj) && obj != null) value = (DataFormat)obj;
         }
 
         private static void GetIgnore(ref bool ignore, AttributeMap attrib, AttributeMap[] attribs, string fullName)
@@ -1242,7 +1253,8 @@ namespace ProtoBuf.Meta
         {
             if (attrib == null) return false;
             if (value) return true;
-            if (attrib.TryGet(memberName, publicOnly, out object obj) && obj != null)
+            object obj;
+            if (attrib.TryGet(memberName, publicOnly, out obj) && obj != null)
             {
                 value = (bool)obj;
                 return true;
@@ -1253,12 +1265,14 @@ namespace ProtoBuf.Meta
         private static void GetFieldNumber(ref int value, AttributeMap attrib, string memberName)
         {
             if (attrib == null || value > 0) return;
-            if (attrib.TryGet(memberName, out object obj) && obj != null) value = (int)obj;
+            object obj;
+            if (attrib.TryGet(memberName, out obj) && obj != null) value = (int)obj;
         }
         private static void GetFieldName(ref string name, AttributeMap attrib, string memberName)
         {
             if (attrib == null || !Helpers.IsNullOrEmpty(name)) return;
-            if (attrib.TryGet(memberName, out object obj) && obj != null) name = (string)obj;
+            object obj;
+            if (attrib.TryGet(memberName, out obj) && obj != null) name = (string)obj;
         }
 
         private static AttributeMap GetAttribute(AttributeMap[] attribs, string fullName)
@@ -1472,9 +1486,9 @@ namespace ProtoBuf.Meta
             ResolveListTypes(model, miType, ref itemType, ref defaultType);
 
             MemberInfo backingField = null;
-            if (pi?.CanWrite == false)
+            if (pi != null && !pi.CanWrite)
             {
-	            string name = $"<{((PropertyInfo) mi).Name}>k__BackingField";
+	            string name = "<" + ((PropertyInfo) mi).Name + ">k__BackingField";
 #if PROFILE259
 				var backingMembers = type.GetTypeInfo().DeclaredMembers;
 	            var memberInfos = backingMembers as MemberInfo[] ?? backingMembers.ToArray();
@@ -1487,7 +1501,7 @@ namespace ProtoBuf.Meta
 		            }
 	            }
 #else
-				var backingMembers = type.GetMember($"<{((PropertyInfo)mi).Name}>k__BackingField", Helpers.IsEnum(type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+				var backingMembers = type.GetMember("<" + ((PropertyInfo)mi).Name + ">k__BackingField", Helpers.IsEnum(type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 				if (backingMembers != null && backingMembers.Length == 1 && (backingMembers[0] as FieldInfo) != null)
                     backingField = backingMembers[0];
 #endif
@@ -1841,7 +1855,8 @@ namespace ProtoBuf.Meta
             else if (IsAutoTuple)
             { // key-value-pair etc
 
-                if (ResolveTupleConstructor(type, out MemberInfo[] mapping) != null)
+                MemberInfo[] mapping;
+                if (ResolveTupleConstructor(type, out mapping) != null)
                 {
                     NewLine(builder, indent).Append("message ").Append(GetSchemaTypeName()).Append(" {");
                     for (int i = 0; i < mapping.Length; i++)
@@ -1952,7 +1967,8 @@ namespace ProtoBuf.Meta
                     bool hasOption = false;
                     if (member.IsMap)
                     {
-                        member.ResolveMapTypes(out var _, out var keyType, out var valueType);
+                        Type keyType, valueType, dictionaryType;
+                        member.ResolveMapTypes(out dictionaryType, out keyType, out valueType);
 
                         var keyTypeName = model.GetSchemaTypeName(keyType, member.MapKeyFormat, false, false, ref imports);
                         schemaTypeName = model.GetSchemaTypeName(valueType, member.MapKeyFormat, member.AsReference, member.DynamicType, ref imports);

@@ -317,7 +317,7 @@ namespace ProtoBuf.Serializers
         private static readonly System.Type ienumeratorType = typeof (IEnumerator), ienumerableType = typeof (IEnumerable);
 #endif
         protected MethodInfo GetEnumeratorInfo(TypeModel model, out MethodInfo moveNext, out MethodInfo current)
-            => GetEnumeratorInfo(model, ExpectedType, Tail.ExpectedType, out moveNext, out current);
+        { return GetEnumeratorInfo(model, ExpectedType, Tail.ExpectedType, out moveNext, out current); }
         internal static MethodInfo GetEnumeratorInfo(TypeModel model, Type expectedType, Type itemType, out MethodInfo moveNext, out MethodInfo current)
         {
 
@@ -521,8 +521,8 @@ namespace ProtoBuf.Serializers
             }
         }
 
-        private bool CanUsePackedPrefix(object obj) =>
-            ArrayDecorator.CanUsePackedPrefix(packedWireType, Tail.ExpectedType);
+        private bool CanUsePackedPrefix(object obj)
+        { return ArrayDecorator.CanUsePackedPrefix(packedWireType, Tail.ExpectedType); }
 
         public override object Read(object value, ProtoReader source)
         {

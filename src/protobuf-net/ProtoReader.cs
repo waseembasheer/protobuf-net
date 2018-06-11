@@ -638,7 +638,7 @@ namespace ProtoBuf
                     break;
                 // case WireType.None: // TODO reinstate once reads reset the wire-type
                 default:
-                    if (value64 < reader.position64) throw reader.CreateException($"Sub-message not read entirely; expected {value64}, was {reader.position64}");
+                    if (value64 < reader.position64) throw reader.CreateException("Sub-message not read entirely; expected " + value64 + ", was " + reader.position64);
                     if (reader.blockEnd64 != reader.position64 && reader.blockEnd64 != long.MaxValue)
                     {
                         throw reader.CreateException("Sub-message not read correctly");
@@ -987,7 +987,10 @@ namespace ProtoBuf
         /// reader to be created.
         /// </summary>
         public static int ReadLengthPrefix(Stream source, bool expectHeader, PrefixStyle style, out int fieldNumber)
-            => ReadLengthPrefix(source, expectHeader, style, out fieldNumber, out int bytesRead);
+        {
+            int bytesRead;
+            return ReadLengthPrefix(source, expectHeader, style, out fieldNumber, out bytesRead);
+        }
 
         /// <summary>
         /// Reads a little-endian encoded integer. An exception is thrown if the data is not all available.
@@ -1014,7 +1017,8 @@ namespace ProtoBuf
         /// </summary>
         public static int DirectReadVarintInt32(Stream source)
         {
-            int bytes = TryReadUInt64Variant(source, out ulong val);
+            ulong val;
+            int bytes = TryReadUInt64Variant(source, out val);
             if (bytes <= 0) throw EoF(null);
             return checked((int)val);
         }
@@ -1380,7 +1384,7 @@ namespace ProtoBuf
         #region RECYCLER
 
         internal static ProtoReader Create(Stream source, TypeModel model, SerializationContext context, int len)
-            => Create(source, model, context, (long)len);
+        { return Create(source, model, context, (long)len); }
         internal static ProtoReader Create(Stream source, TypeModel model, SerializationContext context, long len)
         {
             ProtoReader reader = GetRecycled();

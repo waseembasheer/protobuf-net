@@ -27,10 +27,10 @@ namespace ProtoBuf.Serializers
 #endif
             wellKnown = dataFormat == DataFormat.WellKnown;
         }
-        public Type ExpectedType => expectedType;
+        public Type ExpectedType { get { return expectedType; } }
 
-        bool IProtoSerializer.RequiresOldValue => false;
-        bool IProtoSerializer.ReturnsValue => true;
+        bool IProtoSerializer.RequiresOldValue { get { return false; } }
+        bool IProtoSerializer.ReturnsValue { get { return true; } }
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
@@ -60,13 +60,13 @@ namespace ProtoBuf.Serializers
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.EmitWrite(ctx.MapType(typeof(BclHelpers)),
-                wellKnown ? nameof(BclHelpers.WriteDuration) : nameof(BclHelpers.WriteTimeSpan), valueFrom);
+                wellKnown ? "WriteDuration" : "WriteTimeSpan", valueFrom);
         }
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             if (wellKnown) ctx.LoadValue(valueFrom);
             ctx.EmitBasicRead(ctx.MapType(typeof(BclHelpers)),
-                wellKnown ? nameof(BclHelpers.ReadDuration) : nameof(BclHelpers.ReadTimeSpan),
+                wellKnown ? "ReadDuration" : "ReadTimeSpan",
                 ExpectedType);
         }
 #endif

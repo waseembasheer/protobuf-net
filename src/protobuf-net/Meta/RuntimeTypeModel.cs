@@ -230,7 +230,7 @@ namespace ProtoBuf.Meta
                     headerBuilder.AppendLine(@"syntax = ""proto3"";");
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(syntax));
+                    throw new ArgumentOutOfRangeException("syntax");
             }
             
             if (!Helpers.IsNullOrEmpty(package))
@@ -325,7 +325,8 @@ namespace ProtoBuf.Meta
                         Type type = member.ItemType;
                         if(member.IsMap)
                         {
-                            member.ResolveMapTypes(out _, out _, out type); // don't need key-type
+                            Type _a, _b;
+                            member.ResolveMapTypes(out _a, out _b, out type); // don't need key-type
                         }
                         if(type == null) type = member.MemberType;
                         TryGetCoreSerializer(list, type);
@@ -359,7 +360,8 @@ namespace ProtoBuf.Meta
 
         private void TryGetCoreSerializer(BasicList list, Type itemType)
         {
-            var coreSerializer = ValueMember.TryGetCoreSerializer(this, DataFormat.Default, itemType, out _, false, false, false, false);
+            WireType defaultWireType;
+            var coreSerializer = ValueMember.TryGetCoreSerializer(this, DataFormat.Default, itemType, out defaultWireType, false, false, false, false);
             if(coreSerializer != null)
             {
                 return;

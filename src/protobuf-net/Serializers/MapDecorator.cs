@@ -65,13 +65,13 @@ namespace ProtoBuf.Serializers
 
         private static readonly TKey DefaultKey = (typeof(TKey) == typeof(string)) ? (TKey)(object)"" : default(TKey);
         private static readonly TValue DefaultValue = (typeof(TValue) == typeof(string)) ? (TValue)(object)"" : default(TValue);
-        public override Type ExpectedType => typeof(TDictionary);
+        public override Type ExpectedType { get { return typeof(TDictionary); } }
 
-        public override bool ReturnsValue => true;
+        public override bool ReturnsValue { get { return true; } }
 
-        public override bool RequiresOldValue => AppendToCollection;
+        public override bool RequiresOldValue { get { return AppendToCollection; } }
 
-        private bool AppendToCollection { get; }
+        private bool AppendToCollection { get; set; }
 
         public override object Read(object untyped, ProtoReader source)
         {
@@ -127,8 +127,8 @@ namespace ProtoBuf.Serializers
                 ExpectedType, itemType, out moveNext, out current);
             Type enumeratorType = getEnumerator.ReturnType;
 
-            MethodInfo key = itemType.GetProperty(nameof(KeyValuePair<TKey, TValue>.Key)).GetGetMethod(),
-                @value = itemType.GetProperty(nameof(KeyValuePair<TKey, TValue>.Value)).GetGetMethod();
+            MethodInfo key = itemType.GetProperty("Key").GetGetMethod(),
+                @value = itemType.GetProperty("Value").GetGetMethod();
 
             using (Compiler.Local list = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             using (Compiler.Local iter = new Compiler.Local(ctx, enumeratorType))

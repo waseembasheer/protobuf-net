@@ -395,7 +395,9 @@ namespace ProtoBuf.Meta
 #else
                 var info = memberType;
 #endif
-                if (ImmutableCollectionDecorator.IdentifyImmutable(model, MemberType, out _, out _, out _, out _, out _, out _))
+                MethodInfo _a, _d, _e, _f;
+                PropertyInfo _b, _c;
+                if (ImmutableCollectionDecorator.IdentifyImmutable(model, MemberType, out _a, out _b, out _c, out _d, out _e, out _f))
                 {
                     return false;
                 }
@@ -489,7 +491,8 @@ namespace ProtoBuf.Meta
                 IProtoSerializer ser;
                 if (IsMap)
                 {
-                    ResolveMapTypes(out var dictionaryType, out var keyType, out var valueType);
+                    Type dictionaryType, keyType, valueType;
+                    ResolveMapTypes(out dictionaryType, out keyType, out valueType);
 
                     if (dictionaryType == null)
                     {
@@ -500,12 +503,14 @@ namespace ProtoBuf.Meta
                     {
                         concreteType = memberType;
                     }
-                    var keySer = TryGetCoreSerializer(model, MapKeyFormat, keyType, out var keyWireType, false, false, false, false);
+                    WireType keyWireType;
+                    var keySer = TryGetCoreSerializer(model, MapKeyFormat, keyType, out keyWireType, false, false, false, false);
                     if(!AsReference)
                     {
                         AsReference = MetaType.GetAsReferenceDefault(model, valueType);
                     }
-                    var valueSer = TryGetCoreSerializer(model, MapValueFormat, valueType, out var valueWireType, AsReference, DynamicType, false, true);
+                    WireType valueWireType;
+                    var valueSer = TryGetCoreSerializer(model, MapValueFormat, valueType, out valueWireType, AsReference, DynamicType, false, true);
 #if PROFILE259
 					IEnumerable<ConstructorInfo> ctors = typeof(MapDecorator<,,>).MakeGenericType(new Type[] { dictionaryType, keyType, valueType }).GetTypeInfo().DeclaredConstructors;
 	                if (ctors.Count() != 1)

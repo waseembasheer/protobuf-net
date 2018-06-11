@@ -13,7 +13,7 @@ namespace ProtoBuf.Serializers
 {
     sealed class EnumSerializer : IProtoSerializer
     {
-        public readonly struct EnumPair
+        public struct EnumPair
         {
             public readonly object RawValue; // note that this is boxing, but I'll live with it
 #if !FEAT_IKVM
