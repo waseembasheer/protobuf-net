@@ -119,7 +119,11 @@ namespace ProtoBuf
 #endif
         }
 #if !NO_RUNTIME
+#if TTD_LONGENUMS
+        public static void Sort(long[] keys, object[] values)
+#else
         public static void Sort(int[] keys, object[] values)
+#endif
         {
             // bubble-sort; it'll work on MF, has small code,
             // and works well-enough for our sizes. This approach
@@ -130,7 +134,11 @@ namespace ProtoBuf
                 swapped = false;
                 for (int i = 1; i < keys.Length; i++) {
                     if (keys[i - 1] > keys[i]) {
+#if TTD_LONGENUMS
+                        long tmpKey = keys[i];
+#else
                         int tmpKey = keys[i];
+#endif
                         keys[i] = keys[i - 1];
                         keys[i - 1] = tmpKey;
                         object tmpValue = values[i];
@@ -475,7 +483,11 @@ namespace ProtoBuf
 #if NO_GENERICS
             return null; // never a Nullable<T>, so always returns null
 #else
+#if TTD_NATIVE_NULLABLES
+            return null;
+#else
             return Nullable.GetUnderlyingType(type);
+#endif
 #endif
         }
 

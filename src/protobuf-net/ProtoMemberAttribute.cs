@@ -44,10 +44,18 @@ namespace ProtoBuf
         /// Creates a new ProtoMemberAttribute instance.
         /// </summary>
         /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
+#if TTD_LONGENUMS
+        public ProtoMemberAttribute(long tag) : this(tag, false)
+#else
         public ProtoMemberAttribute(int tag) : this(tag, false)
+#endif
         { }
 
+#if TTD_LONGENUMS
+        internal ProtoMemberAttribute(long tag, bool forced)
+#else
         internal ProtoMemberAttribute(int tag, bool forced)
+#endif
         {
             if (tag <= 0 && !forced) throw new ArgumentOutOfRangeException("tag");
             this.tag = tag;
@@ -73,9 +81,15 @@ namespace ProtoBuf
         /// <summary>
         /// Gets the unique tag used to identify this member within the type.
         /// </summary>
+#if TTD_LONGENUMS
+        public long Tag { get { return tag; } }
+        private long tag;
+        internal void Rebase(long tag) { this.tag = tag; }
+#else
         public int Tag { get { return tag; } }
         private int tag;
         internal void Rebase(int tag) { this.tag = tag; }
+#endif
 
         /// <summary>
         /// Gets or sets a value indicating whether this member is mandatory.

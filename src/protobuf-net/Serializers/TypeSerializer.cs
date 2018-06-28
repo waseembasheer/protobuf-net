@@ -30,12 +30,20 @@ namespace ProtoBuf.Serializers
 #endif
         public Type ExpectedType { get { return forType; } }
         private readonly IProtoSerializer[] serializers;
+#if TTD_LONGENUMS
+        private readonly long[] fieldNumbers;
+#else
         private readonly int[] fieldNumbers;
+#endif
         private readonly bool isRootType, useConstructor, isExtensible, hasConstructor;
         private readonly CallbackSet callbacks;
         private readonly MethodInfo[] baseCtorCallbacks;
         private readonly MethodInfo factory;
+#if TTD_LONGENUMS
+        public TypeSerializer(TypeModel model, Type forType, long[] fieldNumbers, IProtoSerializer[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory)
+#else
         public TypeSerializer(TypeModel model, Type forType, int[] fieldNumbers, IProtoSerializer[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory)
+#endif
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(fieldNumbers != null);

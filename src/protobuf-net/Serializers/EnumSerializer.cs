@@ -19,8 +19,13 @@ namespace ProtoBuf.Serializers
 #if !FEAT_IKVM
             public readonly Enum TypedValue; // note that this is boxing, but I'll live with it
 #endif
+#if TTD_LONGENUMS
+            public readonly long WireValue;
+            public EnumPair(long wireValue, object raw, Type type)
+#else
             public readonly int WireValue;
             public EnumPair(int wireValue, object raw, Type type)
+#endif
             {
                 WireValue = wireValue;
                 RawValue = raw;
@@ -66,12 +71,26 @@ namespace ProtoBuf.Serializers
         bool IProtoSerializer.ReturnsValue { get { return true; } }
 
 #if !FEAT_IKVM
+#if TTD_LONGENUMS
+        private long EnumToWire(object value)
+#else
         private int EnumToWire(object value)
+#endif
         {
             unchecked
             {
                 switch (GetTypeCode())
                 { // unbox then convert to int
+#if TTD_LONGENUMS
+                    case ProtoTypeCode.Byte: return (long)(byte)value;
+                    case ProtoTypeCode.SByte: return (long)(sbyte)value;
+                    case ProtoTypeCode.Int16: return (long)(short)value;
+                    case ProtoTypeCode.Int32: return (long)value;
+                    case ProtoTypeCode.Int64: return (long)(long)value;
+                    case ProtoTypeCode.UInt16: return (long)(ushort)value;
+                    case ProtoTypeCode.UInt32: return (long)(uint)value;
+                    case ProtoTypeCode.UInt64: return (long)(ulong)value;
+#else
                     case ProtoTypeCode.Byte: return (int)(byte)value;
                     case ProtoTypeCode.SByte: return (int)(sbyte)value;
                     case ProtoTypeCode.Int16: return (int)(short)value;
@@ -80,6 +99,7 @@ namespace ProtoBuf.Serializers
                     case ProtoTypeCode.UInt16: return (int)(ushort)value;
                     case ProtoTypeCode.UInt32: return (int)(uint)value;
                     case ProtoTypeCode.UInt64: return (int)(ulong)value;
+#endif
                     default: throw new InvalidOperationException();
                 }
             }
@@ -122,7 +142,11 @@ namespace ProtoBuf.Serializers
         {
             if (map == null)
             {
+#if TTD_LONGENUMS
+                ProtoWriter.WriteInt64(EnumToWire(value), dest);
+#else
                 ProtoWriter.WriteInt32(EnumToWire(value), dest);
+#endif
             }
             else
             {
@@ -130,7 +154,11 @@ namespace ProtoBuf.Serializers
                 {
                     if (object.Equals(map[i].TypedValue, value))
                     {
+#if TTD_LONGENUMS
+                        ProtoWriter.WriteInt64(map[i].WireValue, dest);
+#else
                         ProtoWriter.WriteInt32(map[i].WireValue, dest);
+#endif
                         return;
                     }
                 }
@@ -185,7 +213,11 @@ namespace ProtoBuf.Serializers
             }
             else
             {
+#if TTD_LONGENUMS
+                long[] wireValues = new long[map.Length];
+#else
                 int[] wireValues = new int[map.Length];
+#endif
                 object[] values = new object[map.Length];
                 for (int i = 0; i < map.Length; i++)
                 {

@@ -54,7 +54,11 @@ namespace ProtoBuf.Serializers
         {
             get { return Tail.ExpectedType; }
         }
+#if TTD_LONGENUMS
+        public TagDecorator(long fieldNumber, WireType wireType, bool strict, IProtoSerializer tail)
+#else
         public TagDecorator(int fieldNumber, WireType wireType, bool strict, IProtoSerializer tail)
+#endif
             : base(tail)
         {
             this.fieldNumber = fieldNumber;
@@ -64,7 +68,11 @@ namespace ProtoBuf.Serializers
         public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
         public override bool ReturnsValue { get { return Tail.ReturnsValue; } }
         private readonly bool strict;
+#if TTD_LONGENUMS
+        private readonly long fieldNumber;
+#else
         private readonly int fieldNumber;
+#endif
         private readonly WireType wireType;
 
         private bool NeedsHint

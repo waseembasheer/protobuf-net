@@ -15,14 +15,22 @@ namespace ProtoBuf.Serializers
     sealed class ArrayDecorator : ProtoDecoratorBase
     {
 
+#if TTD_LONGENUMS
+        private readonly long fieldNumber;
+#else
         private readonly int fieldNumber;
+#endif
         private const byte
                    OPTIONS_WritePacked = 1,
                    OPTIONS_OverwriteList = 2,
                    OPTIONS_SupportNull = 4;
         private readonly byte options;
         private readonly WireType packedWireType;
+#if TTD_LONGENUMS
+        public ArrayDecorator(TypeModel model, IProtoSerializer tail, long fieldNumber, bool writePacked, WireType packedWireType, Type arrayType, bool overwriteList, bool supportNull)
+#else
         public ArrayDecorator(TypeModel model, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, Type arrayType, bool overwriteList, bool supportNull)
+#endif
             : base(tail)
         {
             Helpers.DebugAssert(arrayType != null, "arrayType should be non-null");

@@ -22,11 +22,19 @@ namespace ProtoBuf.Meta
     /// </summary>
     public class ValueMember
     {
+#if TTD_LONGENUMS
+        private readonly long fieldNumber;
+#else
         private readonly int fieldNumber;
+#endif
         /// <summary>
         /// The number that identifies this member in a protobuf stream
         /// </summary>
+#if TTD_LONGENUMS
+        public long FieldNumber { get { return fieldNumber; } }
+#else
         public int FieldNumber { get { return fieldNumber; } }
+#endif
         private readonly MemberInfo originalMember;
         private MemberInfo backingMember;
         /// <summary>
@@ -88,7 +96,11 @@ namespace ProtoBuf.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
+#if TTD_LONGENUMS
+        public ValueMember(RuntimeTypeModel model, Type parentType, long fieldNumber, MemberInfo member, Type memberType, Type itemType, Type defaultType, DataFormat dataFormat, object defaultValue)
+#else
         public ValueMember(RuntimeTypeModel model, Type parentType, int fieldNumber, MemberInfo member, Type memberType, Type itemType, Type defaultType, DataFormat dataFormat, object defaultValue) 
+#endif
             : this(model, fieldNumber,memberType, itemType, defaultType, dataFormat)
         {
             if (member == null) throw new ArgumentNullException("member");
@@ -121,7 +133,11 @@ namespace ProtoBuf.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
+#if TTD_LONGENUMS
+        internal ValueMember(RuntimeTypeModel model, long fieldNumber, Type memberType, Type itemType, Type defaultType, DataFormat dataFormat)
+#else
         internal ValueMember(RuntimeTypeModel model, int fieldNumber, Type memberType, Type itemType, Type defaultType, DataFormat dataFormat) 
+#endif
         {
 
             if (memberType == null) throw new ArgumentNullException("memberType");

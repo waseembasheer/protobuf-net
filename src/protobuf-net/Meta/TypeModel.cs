@@ -823,9 +823,16 @@ namespace ProtoBuf.Meta
             }
             return add;
         }
+
+
+
         internal static Type GetListItemType(TypeModel model, Type listType)
         {
             Helpers.DebugAssert(listType != null);
+
+#if TTD_TYPE_AWARE
+            if (TTDUtils.IsTTDCollectionType(listType)) return null;
+#endif
 
 #if WINRT || PROFILE259
 			TypeInfo listTypeInfo = listType.GetTypeInfo();

@@ -156,7 +156,11 @@ namespace ProtoBuf.Serializers
 #endif
         private readonly MethodInfo builderFactory, add, addRange, finish;
         private readonly PropertyInfo isEmpty, length;
+#if TTD_LONGENUMS
+        internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, long fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull,
+#else
         internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull,
+#endif
             MethodInfo builderFactory, PropertyInfo isEmpty, PropertyInfo length, MethodInfo add, MethodInfo addRange, MethodInfo finish)
             : base(model, declaredType, concreteType, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, supportNull)
         {

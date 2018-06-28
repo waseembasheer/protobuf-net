@@ -213,15 +213,27 @@ namespace ProtoBuf.Meta
         }
         internal sealed class Group
         {
+#if TTD_LONGENUMS
+            public readonly long First;
+#else
             public readonly int First;
+#endif
             public readonly BasicList Items;
+#if TTD_LONGENUMS
+            public Group(long first)
+#else
             public Group(int first)
+#endif
             {
                 this.First = first;
                 this.Items = new BasicList();
             }
         }
+#if TTD_LONGENUMS
+        internal static BasicList GetContiguousGroups(long[] keys, object[] values)
+#else
         internal static BasicList GetContiguousGroups(int[] keys, object[] values)
+#endif
         {
             if (keys == null) throw new ArgumentNullException("keys");
             if (values == null) throw new ArgumentNullException("values");

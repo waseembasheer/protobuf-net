@@ -128,13 +128,22 @@ namespace ProtoBuf
             get { return netCache;}
         }
 
+#if TTD_LONGENUMS
+        private long fieldNumber;
+        private int flushLock;
+#else
         private int fieldNumber, flushLock;
+#endif
         WireType wireType;
         internal WireType WireType { get { return wireType; } }
         /// <summary>
         /// Writes a field-header, indicating the format of the next data we plan to write.
         /// </summary>
+#if TTD_LONGENUMS
+        public static void WriteFieldHeader(long fieldNumber, WireType wireType, ProtoWriter writer) {
+#else
         public static void WriteFieldHeader(int fieldNumber, WireType wireType, ProtoWriter writer) {
+#endif
             if (writer == null) throw new ArgumentNullException("writer");
             if (writer.wireType != WireType.None) throw new InvalidOperationException("Cannot write a " + wireType.ToString()
                 + " header until the " + writer.wireType.ToString() + " data has been written");
@@ -180,12 +189,21 @@ namespace ProtoBuf
                 throw new InvalidOperationException("Field mismatch during packed encoding; expected " + writer.packedFieldNumber.ToString() + " but received " + fieldNumber.ToString());
             }
         }
+#if TTD_LONGENUMS
+        internal static void WriteHeaderCore(long fieldNumber, WireType wireType, ProtoWriter writer)
+        {
+            ulong header = (((ulong)fieldNumber) << 3)
+                          | (((ulong)wireType) & 7);
+            WriteUInt64Variant(header, writer);
+        }
+#else
         internal static void WriteHeaderCore(int fieldNumber, WireType wireType, ProtoWriter writer)
         {
             uint header = (((uint)fieldNumber) << 3)
                 | (((uint)wireType) & 7);
             WriteUInt32Variant(header, writer);
         }
+#endif
 
         /// <summary>
         /// Writes a byte-array to the stream; supported wire-types: String
@@ -925,14 +943,22 @@ namespace ProtoBuf
         }
 
 
+#if TTD_LONGENUMS
+        private long packedFieldNumber;
+#else
         private int packedFieldNumber;
+#endif
         /// <summary>
         /// Used for packed encoding; indicates that the next field should be skipped rather than
         /// a field header written. Note that the field number must match, else an exception is thrown
         /// when the attempt is made to write the (incorrect) field. The wire-type is taken from the
         /// subsequent call to WriteFieldHeader. Only primitive types can be packed.
         /// </summary>
+#if TTD_LONGENUMS
+        public static void SetPackedField(long fieldNumber, ProtoWriter writer)
+#else
         public static void SetPackedField(int fieldNumber, ProtoWriter writer)
+#endif
         {
             if (fieldNumber <= 0) throw new ArgumentOutOfRangeException("fieldNumber");
             if (writer == null) throw new ArgumentNullException("writer");
@@ -943,7 +969,11 @@ namespace ProtoBuf
         /// Used for packed encoding; explicitly reset the packed field marker; this is not required
         /// if using StartSubItem/EndSubItem
         /// </summary>
+#if TTD_LONGENUMS
+        public static void ClearPackedField(long fieldNumber, ProtoWriter writer)
+#else
         public static void ClearPackedField(int fieldNumber, ProtoWriter writer)
+#endif
         {
             if (fieldNumber != writer.packedFieldNumber)
                 throw new InvalidOperationException("Field mismatch during packed encoding; expected " + writer.packedFieldNumber.ToString() + " but received " + fieldNumber.ToString());

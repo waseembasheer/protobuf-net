@@ -5,6 +5,9 @@ using System.Text;
 using ProtoBuf.Serializers;
 using System.Reflection;
 using System.Collections.Generic;
+// Hack: Since .Serialization does not exist for .Net Standard
+//using System.Runtime.Serialization;
+
 
 #if PROFILE259
 using System.Linq;
@@ -232,6 +235,9 @@ namespace ProtoBuf.Meta
 #endif
                 .IsGenericType)
             {
+#if TTD_TYPE_AWARE
+                return TTDUtils.ExtractGenericTypeName(type, model);
+#else
                 StringBuilder sb = new StringBuilder(typeName);
                 int split = typeName.IndexOf('`');
                 if (split >= 0) sb.Length = split;
@@ -258,10 +264,15 @@ namespace ProtoBuf.Meta
                     }
                 }
                 return sb.ToString();
+#endif
             }
 #endif
             return typeName;
         }
+
+#if TTD_TYPE_AWARE
+        internal bool HasSurrogate => surrogate != null;
+#endif
 
         private string name;
         /// <summary>
@@ -416,7 +427,11 @@ namespace ProtoBuf.Meta
                 Type defaultType = null;
                 ResolveListTypes(model, type, ref itemType, ref defaultType);
                 ValueMember fakeMember = new ValueMember(model, ProtoBuf.Serializer.ListItemTag, type, itemType, defaultType, DataFormat.Default);
+#if TTD_LONGENUMS
+                return new TypeSerializer(model, type, new long[] { ProtoBuf.Serializer.ListItemTag }, new IProtoSerializer[] { fakeMember.Serializer }, null, true, true, null, constructType, factory);
+#else
                 return new TypeSerializer(model, type, new int[] { ProtoBuf.Serializer.ListItemTag }, new IProtoSerializer[] { fakeMember.Serializer }, null, true, true, null, constructType, factory);
+#endif
             }
             if (surrogate != null)
             {
@@ -435,7 +450,11 @@ namespace ProtoBuf.Meta
             fields.Trim();
             int fieldCount = fields.Count;
             int subTypeCount = subTypes == null ? 0 : subTypes.Count;
+#if TTD_LONGENUMS
+            long[] fieldNumbers = new long[fieldCount + subTypeCount];
+#else
             int[] fieldNumbers = new int[fieldCount + subTypeCount];
+#endif
             IProtoSerializer[] serializers = new IProtoSerializer[fieldCount + subTypeCount];
             int i = 0;
             if (subTypeCount != 0)
@@ -962,7 +981,11 @@ namespace ProtoBuf.Meta
         private static ProtoMemberAttribute NormalizeProtoMember(TypeModel model, MemberInfo member, AttributeFamily family, bool forced, bool isEnum, BasicList partialMembers, int dataMemberOffset, bool inferByTagName, ref bool hasConflictingEnumValue, MemberInfo backingMember = null)
         {
             if (member == null || (family == AttributeFamily.None && !isEnum)) return null; // nix
+#if TTD_LONGENUMS
+            long fieldNumber = long.MinValue, minAcceptFieldNumber = inferByTagName ? -1 : 1;
+#else
             int fieldNumber = int.MinValue, minAcceptFieldNumber = inferByTagName ? -1 : 1;
+#endif
             string name = null;
             bool isPacked = false, ignore = false, done = false, isRequired = false, asReference = false, asReferenceHasValue = false, dynamicType = false, tagIsPinned = false, overwriteList = false;
             DataFormat dataFormat = DataFormat.Default;
@@ -980,10 +1003,18 @@ namespace ProtoBuf.Meta
                 else
                 {
                     attrib = GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
+#if TTD_LONGENUMS
+#if WINRT || PORTABLE || CF || FX11 || COREFX || PROFILE259
+                    fieldNumber = Convert.ToInt64(((FieldInfo)member).GetValue(null));
+#else
+                    fieldNumber = Convert.ToInt64(((FieldInfo)member).GetRawConstantValue());
+#endif
+#else
 #if WINRT || PORTABLE || CF || FX11 || COREFX || PROFILE259
 					fieldNumber = Convert.ToInt32(((FieldInfo)member).GetValue(null));
 #else
                     fieldNumber = Convert.ToInt32(((FieldInfo)member).GetRawConstantValue());
+#endif
 #endif
                     if (attrib != null)
                     {
@@ -998,11 +1029,19 @@ namespace ProtoBuf.Meta
                         {
                             if (attrib.TryGet(nameof(ProtoEnumAttribute.Value), out object tmp))
                             {
+#if TTD_LONGENUMS
+                                if (fieldNumber != (long)tmp)
+#else
                                 if (fieldNumber != (int)tmp)
+#endif
                                 {
                                     hasConflictingEnumValue = true;
                                 }
+#if TTD_LONGENUMS
+                                fieldNumber = (long)tmp;
+#else
                                 fieldNumber = (int)tmp;
+#endif
                             }
                         }
                     }
@@ -1201,7 +1240,11 @@ namespace ProtoBuf.Meta
                 }
                 vm.DynamicType = normalizedAttribute.DynamicType;
 
+#if TTD_NO_MAPS
+                vm.IsMap = false;
+#else
                 vm.IsMap = ignoreListHandling ? false : vm.ResolveMapTypes(out var _, out var _, out var _);
+#endif
                 if (vm.IsMap) // is it even *allowed* to be a map?
                 {
                     if ((attrib = GetAttribute(attribs, "ProtoBuf.ProtoMapAttribute")) != null)
@@ -1251,10 +1294,20 @@ namespace ProtoBuf.Meta
             return false;
         }
 
+#if TTD_LONGENUMS
+        private static void GetFieldNumber(ref long value, AttributeMap attrib, string memberName)
+#else
         private static void GetFieldNumber(ref int value, AttributeMap attrib, string memberName)
+#endif
         {
             if (attrib == null || value > 0) return;
+#if TTD_LONGENUMS
+            // Hack: since DataMemberAttribute is not supported for .Net Standard
+            // if (attrib.TryGet(memberName, out object obj) && obj != null) value = (attrib.AttributeType == typeof(DataMemberAttribute)) ? (int)obj : (long)obj;
+            if (attrib.TryGet(memberName, out object obj) && obj != null) value = (obj is long) ? (long)obj : (int)obj;
+#else
             if (attrib.TryGet(memberName, out object obj) && obj != null) value = (int)obj;
+#endif
         }
         private static void GetFieldName(ref string name, AttributeMap attrib, string memberName)
         {
@@ -1274,7 +1327,11 @@ namespace ProtoBuf.Meta
         /// <summary>
         /// Adds a member (by name) to the MetaType
         /// </summary>        
+#if TTD_LONGENUMS
+        public MetaType Add(long fieldNumber, string memberName)
+#else
         public MetaType Add(int fieldNumber, string memberName)
+#endif
         {
             AddField(fieldNumber, memberName, null, null, null);
             return this;
@@ -1353,6 +1410,10 @@ namespace ProtoBuf.Meta
             {
                 if (deep)
                 {
+#if TTD_TYPE_AWARE
+                    if (TTDUtils.IsTTDGenericCollectionWithBase(this.Type)) return this;
+#endif
+
                     MetaType tmp;
                     do
                     {
@@ -1365,10 +1426,18 @@ namespace ProtoBuf.Meta
             }
             return this;
         }
-        
+
+#if TTD_LONGENUMS
+        private long GetNextFieldNumber()
+#else
         private int GetNextFieldNumber()
+#endif
         {
+#if TTD_LONGENUMS
+            long maxField = 0;
+#else
             int maxField = 0;
+#endif
             foreach (ValueMember member in fields)
             {
                 if (member.FieldNumber > maxField) maxField = member.FieldNumber;
@@ -1388,7 +1457,11 @@ namespace ProtoBuf.Meta
         public MetaType Add(params string[] memberNames)
         {
             if (memberNames == null) throw new ArgumentNullException("memberNames");
+#if TTD_LONGENUMS
+            long next = GetNextFieldNumber();
+#else
             int next = GetNextFieldNumber();
+#endif
             for (int i = 0; i < memberNames.Length; i++)
             {
                 Add(next++, memberNames[i]);
@@ -1423,8 +1496,12 @@ namespace ProtoBuf.Meta
         {
             return AddField(fieldNumber, memberName, itemType, defaultType, null);
         }
-        
+
+#if TTD_LONGENUMS
+        private ValueMember AddField(long fieldNumber, string memberName, Type itemType, Type defaultType, object defaultValue)
+#else
         private ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, object defaultValue)
+#endif
         {
             MemberInfo mi = null;
 #if WINRT || PROFILE259
@@ -1710,7 +1787,11 @@ namespace ProtoBuf.Meta
             for (int i = 0; i < result.Length; i++)
             {
                 ValueMember member = (ValueMember) fields[i];
+#if TTD_LONGENUMS
+                long wireValue = member.FieldNumber;
+#else
                 int wireValue = member.FieldNumber;
+#endif
                 object value = member.GetRawEnumValue();
                 result[i] = new EnumSerializer.EnumPair(wireValue, value, member.MemberType);
             }
@@ -1827,6 +1908,10 @@ namespace ProtoBuf.Meta
         {
             if (surrogate != null) return; // nothing to write
 
+#if TTD_SKIP_EMPTY_CLASSES
+            // Skip empty types that are not part of any hierarchy.
+            if (this.fields.Count == 0 && (this.subTypes == null || this.subTypes.Count == 0) && (this.baseType == null)) return;
+#endif
 
             ValueMember[] fieldsArr = new ValueMember[fields.Count];
             fields.CopyTo(fieldsArr, 0);
@@ -1868,7 +1953,11 @@ namespace ProtoBuf.Meta
             }
             else if(Helpers.IsEnum(type))
             {
+#if TTD_ADD_BASES && NET_4_0
+                NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" : ").Append(type.GetEnumUnderlyingType().Name).Append(" {");
+#else
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
+#endif
                 if (fieldsArr.Length == 0 && EnumPassthru) {
                     if (type
 #if WINRT || COREFX || PROFILE259
@@ -1906,7 +1995,11 @@ namespace ProtoBuf.Meta
                 }
                 else
                 {
+#if TTD_LONGENUMS
+                    Dictionary<long, int> countByField = new Dictionary<long, int>(fieldsArr.Length);
+#else
                     Dictionary<int, int> countByField = new Dictionary<int, int>(fieldsArr.Length);
+#endif
                     bool needsAlias = false;
                     foreach(var field in fieldsArr)
                     {
@@ -1946,7 +2039,11 @@ namespace ProtoBuf.Meta
                 NewLine(builder, indent).Append('}');
             } else
             {
+#if TTD_ADD_BASES
+                NewLine(builder, indent).Append("message ").Append(GetSchemaTypeName()).Append(this.baseType != null ? (" : " + baseType.GetSchemaTypeName()) : "").Append(" {");
+#else
                 NewLine(builder, indent).Append("message ").Append(GetSchemaTypeName()).Append(" {");
+#endif
                 foreach (ValueMember member in fieldsArr)
                 {
                     string schemaTypeName;
@@ -2030,15 +2127,28 @@ namespace ProtoBuf.Meta
                 if (subTypes != null && subTypes.Count != 0)
                 {
                     NewLine(builder, indent + 1).Append("// the following represent sub-types; at most 1 should have a value");
+#if TTD_ADD_DERIVED
+                    NewLine(builder, indent + 1).Append("subtypes");
+                    NewLine(builder, indent + 1).Append("{");
+#endif
                     SubType[] subTypeArr = new SubType[subTypes.Count];
                     subTypes.CopyTo(subTypeArr, 0);
                     Array.Sort(subTypeArr, SubType.Comparer.Default);
                     foreach (SubType subType in subTypeArr)
                     {
                         string subTypeName = subType.DerivedType.GetSchemaTypeName();
+#if TTD_ADD_DERIVED
+                        NewLine(builder, indent + 2).Append((syntax == ProtoSyntax.Proto2 ? "optional " : "")).Append(subTypeName)
+                            .Append(" ").Append(subTypeName).Append(" = ").Append(subType.FieldNumber).Append(';');
+#endif
+
                         NewLine(builder, indent + 1).Append((syntax == ProtoSyntax.Proto2 ? "optional " : "")).Append(subTypeName)
                             .Append(" ").Append(subTypeName).Append(" = ").Append(subType.FieldNumber).Append(';');
                     }
+
+#if TTD_ADD_DERIVED
+                    NewLine(builder, indent + 1).Append("}");
+#endif
                 }
                 NewLine(builder, indent).Append('}');
             }

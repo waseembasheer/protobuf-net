@@ -40,7 +40,11 @@ namespace ProtoBuf.Serializers
 
         private readonly MethodInfo add;
 
+#if TTD_LONGENUMS
+        private readonly long fieldNumber;
+#else
         private readonly int fieldNumber;
+#endif
 
         private bool IsList { get { return (options & OPTIONS_IsList) != 0; } }
         private bool SuppressIList { get { return (options & OPTIONS_SuppressIList) != 0; } }
@@ -50,7 +54,11 @@ namespace ProtoBuf.Serializers
         protected readonly WireType packedWireType;
 
 
+#if TTD_LONGENUMS
+        internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, long fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull)
+#else
         internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull)
+#endif
         {
 #if !NO_GENERICS
             MethodInfo builderFactory, add, addRange, finish;
@@ -66,7 +74,11 @@ namespace ProtoBuf.Serializers
             return new ListDecorator(model, declaredType, concreteType, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, supportNull);
         }
 
+#if TTD_LONGENUMS
+        protected ListDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, long fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull)
+#else
         protected ListDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull)
+#endif
             : base(tail)
         {
             if (returnList) options |= OPTIONS_ReturnList;

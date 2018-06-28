@@ -297,10 +297,36 @@ namespace ProtoBuf.Meta
         private void CascadeDependents(BasicList list, MetaType metaType)
         {
             MetaType tmp;
+
+#if TTD_TYPE_AWARE
+            bool ttdCollection = TTDUtils.IsTTDCollectionType(metaType.Type);
+            bool nullableType = TTDUtils.IsNullableType(metaType.Type);
+
+            if (metaType.IsList || ttdCollection || nullableType)
+#else
             if (metaType.IsList)
+#endif
             {
+#if TTD_TYPE_AWARE
+                Type[] itemTypes = metaType.IsList ?
+                    new Type[1] { TypeModel.GetListItemType(this, metaType.Type) } :
+                    (ttdCollection ?
+#if WINRT || COREFX || PROFILE259
+                        metaType.Type.GetTypeInfo().GenericTypeArguments :
+#else
+                        metaType.Type.GetGenericArguments() :
+#endif
+                        new Type[1] { Nullable.GetUnderlyingType(metaType.Type) });
+
+                foreach (var itemType in itemTypes)
+                {
+                    WireType defaultWireType;
+                    TryGetCoreSerializer(list, itemType);
+                }
+#else
                 Type itemType = TypeModel.GetListItemType(this, metaType.Type);
                 TryGetCoreSerializer(list, itemType);
+#endif
             }
             else
             {
@@ -2094,7 +2120,11 @@ namespace ProtoBuf.Meta
                                 return ".google.protobuf.Timestamp";
                             default:
                                 imports |= CommonImports.Bcl;
+#if TTD_TYPE_AWARE
+                                return "DateTime";
+#else
                                 return ".bcl.DateTime";
+#endif
                         }
                     case ProtoTypeCode.TimeSpan:
                         switch(dataFormat)
@@ -2105,10 +2135,19 @@ namespace ProtoBuf.Meta
                                 return ".google.protobuf.Duration";
                             default:
                                 imports |= CommonImports.Bcl;
+#if TTD_TYPE_AWARE
+                                return "TimeSpan";
+#else
                                 return ".bcl.TimeSpan";
+#endif
                         }
+#if TTD_TYPE_AWARE
+                    case ProtoTypeCode.Decimal: imports |= CommonImports.Bcl; return "Decimal";
+                    case ProtoTypeCode.Guid: imports |= CommonImports.Bcl; return "Guid";
+#else
                     case ProtoTypeCode.Decimal: imports |= CommonImports.Bcl; return ".bcl.Decimal";
                     case ProtoTypeCode.Guid: imports |= CommonImports.Bcl; return ".bcl.Guid";
+#endif
                     case ProtoTypeCode.Type: return "string";
                     default: throw new NotSupportedException("No .proto map found for: " + effectiveType.FullName);
                 }
