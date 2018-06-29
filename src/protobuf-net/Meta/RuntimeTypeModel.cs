@@ -260,6 +260,10 @@ namespace ProtoBuf.Meta
                 {
                     MetaType tmp = metaTypesArr[i];
                     if (tmp.IsList && tmp != primaryType) continue;
+#if TTD_TYPE_AWARE
+                    if (TTDUtils.IsTTDCollectionType(tmp.Type)) continue;
+                    if (TTDUtils.IsNullableType(tmp.Type)) continue;
+#endif
                     tmp.WriteSchema(bodyBuilder, 0, ref imports, syntax);
                 }
             }

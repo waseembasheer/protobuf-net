@@ -69,10 +69,9 @@ namespace ProtoBuf.Meta
         {
             return t
 #if WINRT || COREFX || PROFILE259
-            .GetTypeInfo().IsGenericType
-#else
-            .IsGenericType
+            .GetTypeInfo()
 #endif
+            .IsGenericType
             && (IsQueueOrStack(t) || IsListHashSetOrDictionary(t) || IsTTDGenericCollectionWithBase(t));
         }
 
@@ -100,7 +99,6 @@ namespace ProtoBuf.Meta
                        name.StartsWith("List") || 
                        name.StartsWith("HashSet") || 
                        name.StartsWith("Dictionary") || 
-                       name.StartsWith("IDictionary") || 
                        name.StartsWith("IDictionary"));
         }
 

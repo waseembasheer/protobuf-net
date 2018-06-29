@@ -60,6 +60,10 @@
   <PropertyGroup Condition="'$(PlatformBinaryFormatter)' == 'true'">
     <DefineConstants>$(DefineConstants);PLAT_BINARYFORMATTER</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net40|AnyCPU'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
   <ItemGroup Condition="'$(ImportLibs)|$(FeatureServiceModel)' == 'net|true'">
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Configuration" />

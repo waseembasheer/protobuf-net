@@ -46,19 +46,22 @@ namespace ProtoBuf
         /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
 #if TTD_LONGENUMS
         public ProtoMemberAttribute(long tag) : this(tag, false)
-#else
-        public ProtoMemberAttribute(int tag) : this(tag, false)
+        { }
 #endif
+        public ProtoMemberAttribute(int tag) : this(tag, false)
         { }
 
 #if TTD_LONGENUMS
         internal ProtoMemberAttribute(long tag, bool forced)
-#else
-        internal ProtoMemberAttribute(int tag, bool forced)
-#endif
         {
             if (tag <= 0 && !forced) throw new ArgumentOutOfRangeException("tag");
             this.tag = tag;
+        }
+#endif
+        internal ProtoMemberAttribute(int tag, bool forced)
+        {
+            if (tag <= 0 && !forced) throw new ArgumentOutOfRangeException("tag");
+            this.tag = (long)tag;
         }
 
 #if !NO_RUNTIME

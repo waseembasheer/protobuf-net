@@ -348,10 +348,12 @@ namespace ProtoBuf.Meta
             
             if (Helpers.IsEnum(type))
             {
+#if !TTD_TYPE_AWARE
 #if WINRT || COREFX || PROFILE259
 				EnumPassthru = typeInfo.IsDefined(typeof(FlagsAttribute), false);
 #else
                 EnumPassthru = type.IsDefined(model.MapType(typeof(FlagsAttribute)), false);
+#endif
 #endif
             }
         }
@@ -1953,7 +1955,7 @@ namespace ProtoBuf.Meta
             }
             else if(Helpers.IsEnum(type))
             {
-#if TTD_ADD_BASES && NET_4_0
+#if TTD_ADD_BASES && NET40
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" : ").Append(type.GetEnumUnderlyingType().Name).Append(" {");
 #else
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
@@ -2126,8 +2128,9 @@ namespace ProtoBuf.Meta
                 }
                 if (subTypes != null && subTypes.Count != 0)
                 {
+#if !TTD_ADD_DERIVED
                     NewLine(builder, indent + 1).Append("// the following represent sub-types; at most 1 should have a value");
-#if TTD_ADD_DERIVED
+#else
                     NewLine(builder, indent + 1).Append("subtypes");
                     NewLine(builder, indent + 1).Append("{");
 #endif
@@ -2140,10 +2143,10 @@ namespace ProtoBuf.Meta
 #if TTD_ADD_DERIVED
                         NewLine(builder, indent + 2).Append((syntax == ProtoSyntax.Proto2 ? "optional " : "")).Append(subTypeName)
                             .Append(" ").Append(subTypeName).Append(" = ").Append(subType.FieldNumber).Append(';');
-#endif
-
+#else
                         NewLine(builder, indent + 1).Append((syntax == ProtoSyntax.Proto2 ? "optional " : "")).Append(subTypeName)
                             .Append(" ").Append(subTypeName).Append(" = ").Append(subType.FieldNumber).Append(';');
+#endif
                     }
 
 #if TTD_ADD_DERIVED
