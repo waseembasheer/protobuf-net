@@ -1743,17 +1743,57 @@ namespace ProtoBuf.Meta
             catch { }
             try
             {
+#if TTD_TYPE_AWARE
+                string fullName;
+                // Check for generic type name.
+                if (name.IndexOf('[') > 0)
+                {
+                    int bracketCount = 0;
+                    int startIndex = -1;
+                    for (int i = 0; i < name.Length; i++)
+                    {
+                        if (name[i] == '[')
+                        {
+                            bracketCount++;
+                        }
+                        else if (name[i] == ']')
+                        {
+                            bracketCount--;
+                        }
+                        else if (name[i] == ',' && bracketCount == 0)
+                        {
+                            startIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (startIndex == -1)
+                    {
+                        fullName = name.Trim();
+                    }
+                    else
+                    {
+                        fullName = name.Substring(0, startIndex).Trim();
+                    }
+                }
+                else
+                {
+                    int i = name.IndexOf(',');
+                    fullName = (i > 0 ? name.Substring(0, i) : name).Trim();
+                }
+#else
                 int i = name.IndexOf(',');
                 string fullName = (i > 0 ? name.Substring(0, i) : name).Trim();
+#endif
 #if !(WINRT || FEAT_IKVM || COREFX || PROFILE259)
                 if (assembly == null) assembly = Assembly.GetCallingAssembly();
 #endif
-				Type type = assembly?.GetType(fullName);
+               Type type = assembly?.GetType(fullName);
                 if (type != null) return type;
             }
             catch { }
             return null;
-        }
+            }
 
     }
 
