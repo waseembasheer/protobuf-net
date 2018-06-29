@@ -96,7 +96,7 @@ namespace ProtoBuf.Meta
         {
             string name = t.Name;
             return name != null && (
-                       name.StartsWith("List") || 
+                       name.StartsWith("List") ||
                        name.StartsWith("HashSet") || 
                        name.StartsWith("Dictionary") || 
                        name.StartsWith("IDictionary"));
@@ -111,7 +111,8 @@ namespace ProtoBuf.Meta
                        name.StartsWith("SerializableHashSet") ||
                        name.StartsWith("SortedKeyedSequence") ||
                        name.StartsWith("AdjustmentsCacheEntity") ||
-                       name.StartsWith("KeyHashIndex")) &&
+                       name.StartsWith("KeyHashIndex") ||
+                       name.StartsWith("PermissionSet")) &&
                    !name.EndsWith("Base");
         }
     }
