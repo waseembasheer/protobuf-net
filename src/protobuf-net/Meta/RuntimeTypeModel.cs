@@ -2085,8 +2085,29 @@ namespace ProtoBuf.Meta
                         if (asReference) imports |= CommonImports.Bcl;
                         return asReference ? ".bcl.NetObjectProxy" : "string";
                     case ProtoTypeCode.Byte:
+#if TTD_TYPE_AWARE
+                        switch (dataFormat)
+                        {
+                            case DataFormat.FixedSize: return "fixed32";
+                            default: return "uint8";
+                        }
+#endif
                     case ProtoTypeCode.Char:
+#if TTD_TYPE_AWARE
+                        switch (dataFormat)
+                        {
+                            case DataFormat.FixedSize: return "fixed32";
+                            default: return "uint16";
+                        }
+#endif
                     case ProtoTypeCode.UInt16:
+#if TTD_TYPE_AWARE
+                        switch (dataFormat)
+                        {
+                            case DataFormat.FixedSize: return "fixed32";
+                            default: return "uint16";
+                        }
+#endif
                     case ProtoTypeCode.UInt32:
                         switch (dataFormat)
                         {
@@ -2094,7 +2115,23 @@ namespace ProtoBuf.Meta
                             default: return "uint32";
                         }
                     case ProtoTypeCode.SByte:
+#if TTD_TYPE_AWARE
+                        switch (dataFormat)
+                        {
+                            case DataFormat.ZigZag: return "sint32";
+                            case DataFormat.FixedSize: return "sfixed32";
+                            default: return "int8";
+                        }
+#endif
                     case ProtoTypeCode.Int16:
+#if TTD_TYPE_AWARE
+                        switch (dataFormat)
+                        {
+                            case DataFormat.ZigZag: return "sint32";
+                            case DataFormat.FixedSize: return "sfixed32";
+                            default: return "int16";
+                        }
+#endif
                     case ProtoTypeCode.Int32:
                         switch (dataFormat)
                         {
@@ -2131,7 +2168,7 @@ namespace ProtoBuf.Meta
 #endif
                         }
                     case ProtoTypeCode.TimeSpan:
-                        switch(dataFormat)
+                        switch (dataFormat)
                         {
                             case DataFormat.FixedSize: return "sint64";
                             case DataFormat.WellKnown:

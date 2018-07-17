@@ -2007,7 +2007,7 @@ namespace ProtoBuf.Meta
             else if(Helpers.IsEnum(type))
             {
 #if TTD_ADD_BASES && NET40
-                NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" : ").Append(type.GetEnumUnderlyingType().Name).Append(" {");
+                NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" : ").Append(model.GetSchemaTypeName(type.GetEnumUnderlyingType(), DataFormat.Default, false, false, ref imports)).Append(" {");
 #else
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
 #endif

@@ -50,7 +50,8 @@ namespace ProtoBuf.Meta
                     }
                     else
                     {
-                        sb.Append(tmp.Name);
+                        RuntimeTypeModel.CommonImports ci = RuntimeTypeModel.CommonImports.None;
+                        sb.Append(model.GetSchemaTypeName(tmp, DataFormat.Default, false, false, ref ci));
                     }
                 }
 
