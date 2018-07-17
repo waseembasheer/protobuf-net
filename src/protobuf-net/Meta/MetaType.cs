@@ -527,13 +527,49 @@ namespace ProtoBuf.Meta
             AttributeMap[] typeAttribs = AttributeMap.Create(model, type, false);
             for (int i = 0; i < typeAttribs.Length; i++)
             {
-                if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute")
+                if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute" ||
+                    typeAttribs[i].AttributeType.FullName == "TheTradeDesk.AdPlatform.ProtoBuf.ProtoContractAttribute")
                 {
                     if (typeAttribs[i].TryGet("AsReferenceDefault", out object tmp)) return (bool)tmp;
                 }
             }
             return false;
         }
+
+#if WINRT || COREFX || PROFILE259
+#else
+        private static Assembly ttdAssembly;
+
+        private static Type protoIgnoreType;
+
+        private static Type GetProtoIgnoreType()
+        {
+            if (ttdAssembly == null)
+            {
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    if (asm.FullName.Contains("TheTradeDesk.AdPlatform.Shared"))
+                    {
+                        var sharedLocation = asm.Location;
+
+                        ttdAssembly = Assembly.LoadFrom(System.IO.Path.GetDirectoryName(sharedLocation) + @"\adplatform-protobuf-net.dll");
+                        break;
+                    }
+                }
+
+                if (ttdAssembly == null)
+                {
+                    return null;
+                }
+
+                protoIgnoreType = ttdAssembly.GetType("TheTradeDesk.AdPlatform.ProtoBuf.ProtoIgnoreAttribute");
+            }
+
+            return protoIgnoreType;
+        }
+#endif
+
+
         internal void ApplyDefaultBehaviour()
         {
             Type baseType = GetBaseType(this);
@@ -563,7 +599,7 @@ namespace ProtoBuf.Meta
                 AttributeMap item = (AttributeMap)typeAttribs[i];
                 object tmp;
                 string fullAttributeTypeName = item.AttributeType.FullName;
-                if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoIncludeAttribute")
+                if (!isEnum && (fullAttributeTypeName == "ProtoBuf.ProtoIncludeAttribute" || fullAttributeTypeName == "TheTradeDesk.AdPlatform.ProtoBuf.ProtoIncludeAttribute"))
                 {
                     int tag = 0;
                     if (item.TryGet("tag", out tmp)) tag = (int)tmp;
@@ -593,7 +629,7 @@ namespace ProtoBuf.Meta
                     if(IsValidSubType(knownType)) AddSubType(tag, knownType, dataFormat);
                 }
 
-                if (fullAttributeTypeName == "ProtoBuf.ProtoPartialIgnoreAttribute")
+                if (fullAttributeTypeName == "ProtoBuf.ProtoPartialIgnoreAttribute" || fullAttributeTypeName == "TheTradeDesk.AdPlatform.ProtoBuf.ProtoPartialIgnoreAttribute")
                 {
                     if (item.TryGet(nameof(ProtoPartialIgnoreAttribute.MemberName), out tmp) && tmp != null)
                     {
@@ -601,13 +637,14 @@ namespace ProtoBuf.Meta
                         partialIgnores.Add((string)tmp);
                     }
                 }
-                if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoPartialMemberAttribute")
+                if (!isEnum && (fullAttributeTypeName == "ProtoBuf.ProtoPartialMemberAttribute" || fullAttributeTypeName == "TheTradeDesk.AdPlatform.ProtoBuf.ProtoPartialMemberAttribute"))
                 {
                     if (partialMembers == null) partialMembers = new BasicList();
                     partialMembers.Add(item);
                 }
                 
-                if (fullAttributeTypeName == "ProtoBuf.ProtoContractAttribute")
+                if (fullAttributeTypeName == "ProtoBuf.ProtoContractAttribute" ||
+                    fullAttributeTypeName == "TheTradeDesk.AdPlatform.ProtoBuf.ProtoContractAttribute")
                 {
                     if (item.TryGet(nameof(ProtoContractAttribute.Name), out tmp)) name = (string) tmp;
                     if (Helpers.IsEnum(type)) // note this is subtly different to isEnum; want to do this even if [Flags]
@@ -695,10 +732,15 @@ namespace ProtoBuf.Meta
                 : BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 #endif
             bool hasConflictingEnumValue = false;
+
             foreach (MemberInfo member in foundList)
             {
                 if (member.DeclaringType != type) continue;
                 if (member.IsDefined(model.MapType(typeof(ProtoIgnoreAttribute)), true)) continue;
+#if WINRT || COREFX || PROFILE259
+#else
+                if (member.IsDefined(model.MapType(GetProtoIgnoreType()), true)) continue;
+#endif
                 if (partialIgnores != null && partialIgnores.Contains(member.Name)) continue;
 
                 bool forced = false, isPublic, isField;
@@ -749,6 +791,10 @@ namespace ProtoBuf.Meta
                         CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoAfterSerializationAttribute", ref callbacks, 1);
                         CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoBeforeDeserializationAttribute", ref callbacks, 2);
                         CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoAfterDeserializationAttribute", ref callbacks, 3);
+                        CheckForCallback(method, memberAttribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoBeforeSerializationAttribute", ref callbacks, 0);
+                        CheckForCallback(method, memberAttribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoAfterSerializationAttribute", ref callbacks, 1);
+                        CheckForCallback(method, memberAttribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoBeforeDeserializationAttribute", ref callbacks, 2);
+                        CheckForCallback(method, memberAttribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoAfterDeserializationAttribute", ref callbacks, 3);
                         CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnSerializingAttribute", ref callbacks, 4);
                         CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnSerializedAttribute", ref callbacks, 5);
                         CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnDeserializingAttribute", ref callbacks, 6);
@@ -837,6 +883,7 @@ namespace ProtoBuf.Meta
             {
                 switch (attributes[i].AttributeType.FullName)
                 {
+                    case "TheTradeDesk.AdPlatform.ProtoBuf.ProtoContractAttribute":
                     case "ProtoBuf.ProtoContractAttribute":
                         bool tmp = false;
                         GetFieldBoolean(ref tmp, attributes[i], "UseProtoMembersOnly");
@@ -997,14 +1044,16 @@ namespace ProtoBuf.Meta
 
             if (isEnum)
             {
-                attrib = GetAttribute(attribs, "ProtoBuf.ProtoIgnoreAttribute");
+                attrib = GetAttribute(attribs, "ProtoBuf.ProtoIgnoreAttribute") ?? GetAttribute(attribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoIgnoreAttribute");
+
                 if (attrib != null)
                 {
                     ignore = true;
                 }
                 else
                 {
-                    attrib = GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
+                    attrib = GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute") ?? GetAttribute(attribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoEnumAttribute");
+
 #if TTD_LONGENUMS
 #if WINRT || PORTABLE || CF || FX11 || COREFX || PROFILE259
                     fieldNumber = Convert.ToInt64(((FieldInfo)member).GetValue(null));
@@ -1054,8 +1103,10 @@ namespace ProtoBuf.Meta
 
             if (!ignore && !done) // always consider ProtoMember 
             {
-                attrib = GetAttribute(attribs, "ProtoBuf.ProtoMemberAttribute");
+                attrib = GetAttribute(attribs, "ProtoBuf.ProtoMemberAttribute") ?? GetAttribute(attribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoMemberAttribute");
+
                 GetIgnore(ref ignore, attrib, attribs, "ProtoBuf.ProtoIgnoreAttribute");
+                GetIgnore(ref ignore, attrib, attribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoIgnoreAttribute");
 
                 if (!ignore && attrib != null)
                 {
@@ -1249,7 +1300,7 @@ namespace ProtoBuf.Meta
 #endif
                 if (vm.IsMap) // is it even *allowed* to be a map?
                 {
-                    if ((attrib = GetAttribute(attribs, "ProtoBuf.ProtoMapAttribute")) != null)
+                    if ((attrib = (GetAttribute(attribs, "ProtoBuf.ProtoMapAttribute") ?? GetAttribute(attribs, "TheTradeDesk.AdPlatform.ProtoBuf.ProtoMapAttribute"))) != null)
                     {
                         if (attrib.TryGet(nameof(ProtoMapAttribute.DisableMap), out object tmp) && (bool)tmp)
                         {
