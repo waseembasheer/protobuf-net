@@ -548,7 +548,7 @@ namespace ProtoBuf.Meta
             {
                 foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    if (asm.FullName.Contains("TheTradeDesk.AdPlatform.Shared"))
+                    if (asm.FullName.StartsWith("TTD."))
                     {
                         var sharedLocation = asm.Location;
 
