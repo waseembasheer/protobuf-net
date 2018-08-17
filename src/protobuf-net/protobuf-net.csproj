@@ -5,7 +5,7 @@
     <Description>Provides simple access to fast and efficient "Protocol Buffers" serialization from .NET applications</Description>
     <TargetFrameworks>net20;net35;net40;netstandard1.0;netstandard1.3;netstandard2.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>EMIT_ASSEMBLY_INFO;TTD_LONGENUMS;TTD_NO_MAPS;TTD_SKIP_EMPTY_CLASSES;TTD_NATIVE_NULLABLES;TTD_ADD_BASES;TTD_ADD_DERIVED;TTD_TYPE_AWARE;</DefineConstants>
+    <DefineConstants>EMIT_ASSEMBLY_INFO;TTD_LONGENUMS;TTD_ALLOW_MIXED_ATTRIBUTES;TTD_NO_MAPS;TTD_SKIP_EMPTY_CLASSES;TTD_NATIVE_NULLABLES;TTD_ADD_BASES;TTD_ADD_DERIVED;TTD_TYPE_AWARE;</DefineConstants>
     <!-- new build tools spit these out -->
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 

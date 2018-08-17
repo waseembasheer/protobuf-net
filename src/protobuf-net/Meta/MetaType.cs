@@ -1163,7 +1163,11 @@ namespace ProtoBuf.Meta
                 }
             }
 
+#if TTD_ALLOW_MIXED_ATTRIBUTES
+            if (!ignore && !done && (HasFamily(family, AttributeFamily.DataContractSerialier) || HasFamily(family, AttributeFamily.ProtoBuf)))
+#else
             if (!ignore && !done && HasFamily(family, AttributeFamily.DataContractSerialier))
+#endif
             {
                 attrib = GetAttribute(attribs, "System.Runtime.Serialization.DataMemberAttribute");
                 if (attrib != null)
