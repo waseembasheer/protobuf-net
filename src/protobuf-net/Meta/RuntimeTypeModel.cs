@@ -324,8 +324,21 @@ namespace ProtoBuf.Meta
 
                 foreach (var itemType in itemTypes)
                 {
+#if TTD_TYPE_AWARE
+                    if (itemType.IsArray)
+                    {
+                        Type arrayToList = typeof(System.Collections.Generic.List<>).MakeGenericType(itemType.GetElementType());
+                        TryGetCoreSerializer(list, arrayToList);
+                    }
+                    else
+                    {
+                        WireType defaultWireType;
+                        TryGetCoreSerializer(list, itemType);
+                    }
+#else
                     WireType defaultWireType;
                     TryGetCoreSerializer(list, itemType);
+#endif
                 }
 #else
                 Type itemType = TypeModel.GetListItemType(this, metaType.Type);

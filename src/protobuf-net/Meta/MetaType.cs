@@ -332,8 +332,14 @@ namespace ProtoBuf.Meta
             this.factory = factory;
             if (model == null) throw new ArgumentNullException("model");
             if (type == null) throw new ArgumentNullException("type");
-
+#if TTD_TYPE_AWARE
+            if (type.IsArray)
+            {
+                type = typeof(System.Collections.Generic.List<>).MakeGenericType(type.GetElementType());
+            }
+#else
             if (type.IsArray) throw InbuiltType(type);
+#endif
             IProtoSerializer coreSerializer = model.TryGetBasicTypeSerializer(type);
             if (coreSerializer != null)
             {
