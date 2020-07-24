@@ -85,24 +85,6 @@ namespace ProtoBuf.Meta
 #endif
         }
 
-        public static bool IsQueueOrStack(Type t)
-        {
-            string name = t.Name;
-            return name != null && (
-                       name.StartsWith("Queue") || 
-                       name.StartsWith("Stack"));
-        }
-
-        public static bool IsListHashSetOrDictionary(Type t)
-        {
-            string name = t.Name;
-            return name != null && (
-                       name.StartsWith("List") ||
-                       name.StartsWith("HashSet") || 
-                       name.StartsWith("Dictionary") || 
-                       name.StartsWith("IDictionary"));
-        }
-
         public static bool IsTTDGenericCollectionWithBase(Type t)
         {
             string name = t.Name;
@@ -115,6 +97,25 @@ namespace ProtoBuf.Meta
                        name.StartsWith("KeyHashIndex") ||
                        name.StartsWith("PermissionSet")) &&
                    !name.EndsWith("Base");
+        }
+
+        private static bool IsQueueOrStack(Type t)
+        {
+            string name = t.Name;
+            return name != null && (
+                       name.StartsWith("Queue") || 
+                       name.StartsWith("Stack"));
+        }
+
+        private static bool IsListHashSetOrDictionary(Type t)
+        {
+            string name = t.Name;
+            return name != null && (
+                       name.StartsWith("List") ||
+                       name.StartsWith("HashSet") || 
+                       name.StartsWith("Dictionary") || 
+                       name.StartsWith("IDictionary") ||
+                       name.StartsWith("SortedList"));
         }
     }
 }
